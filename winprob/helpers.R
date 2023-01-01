@@ -1,5 +1,3 @@
-`%||%` <- rlang::`%||%`
-
 get_espn_wp_college <- function(espn_game_id) {
   espn_wp <- data.frame()
   tryCatch(
@@ -39,7 +37,7 @@ dbCopy <- function(conn, name, value, drop = FALSE, fields = NULL) {
   }
 
   if (isFALSE(DBI::dbExistsTable(conn, name))) {
-    DBI::dbCreateTable(conn, name, fields %||% value)
+    DBI::dbCreateTable(conn, name, rlang::`%||%`(fields, value))
   }
 
   tmp <- tempfile(fileext = ".csv")
