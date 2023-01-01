@@ -23,14 +23,30 @@ winners <- query(
     join pbp using(game_id, id_play)
   ),
   clocks as (
-    select game_id, id_play, "clock.minutes" as minutes, period
+    select game_id, id_play, "clock.minutes" as minutes, "clock.seconds" as seconds, period
     from pbp
+  ),
+  scores as (
+    select
+      game_id, id_play,
+      case when offense_play = home then offense_score else defense_score end as home_score,
+      case when offense_play = away then offense_score else defense_score end as away_score
+    from pbp
+  ),
+  out as (
+    select
+      pbp.game_id, pbp.id_play,
+      pbp.home, pbp.away,
+      c.period, c.minutes, c.seconds,
+      gw.home_win, wps.home_win_percentage
+    from pbp
+    join clocks c on c.id_play = pbp.id_play
+    join game_winners gw on pbp.game_id = gw.game_id
+    join wps on wps.play_id = pbp.id_play
+    join scores s on s.id_play = pbp.id_play
   )
 
-  select gw.game_id, pbp.home, pbp.away, gw.home_win, wps.home_win_percentage
-  from pbp
-  join clocks c on c.period = 3 and c.minutes = 15 and c.game_id = pbp.game_id and c.id_play = pbp.id_play
-  join game_winners gw using(game_id)
-  join wps on pbp.game_id = wps.espn_game_id and wps.play_id = pbp.id_play
+  select * from clocks
+
   '
 )
