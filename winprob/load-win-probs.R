@@ -20,19 +20,28 @@ plan(multisession, workers = 8)
 
 wps <- future_map_dfr(
   games,
-  ~ safely_get_wp(.x) |>
-    pluck("result") |>
-    tibble() |>
-    mutate(
-      espn_game_id = as.integer(espn_game_id),
-      play_id = as.numeric(play_id)
-    ),
-  .options = furrr_options(stdout = FALSE)
+  ~ {
+    result <- safely_get_wp(.x) |>
+      pluck("result")
+
+    if (nrow(result) == 0) {
+      return(
+        tibble()
+      )
+    }
+
+    result |>
+      tibble() |>
+      mutate(
+        espn_game_id = as.integer(espn_game_id),
+        play_id = as.numeric(play_id)
+      )
+  }
 )
 
 dbCopy(
   conn,
   "wps",
   wps,
-  truncate = TRUE
+  drop = TRUE
 )
