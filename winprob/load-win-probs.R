@@ -16,7 +16,7 @@ games <- query(
 
 safely_get_wp <- safely(get_espn_wp_college)
 
-plan(multisession, workers = 8)
+plan(multisession, workers = 10)
 
 wps <- future_map_dfr(
   games,
@@ -34,7 +34,7 @@ wps <- future_map_dfr(
       tibble() |>
       mutate(
         espn_game_id = as.integer(espn_game_id),
-        play_id = as.numeric(play_id)
+        play_id = as.character(play_id)
       )
   }
 )
@@ -43,5 +43,10 @@ dbCopy(
   conn,
   "wps",
   wps,
+  fields = list(
+    espn_game_id = "BIGINT",
+    play_id = "BIGINT",
+    home_win_percentage = "FLOAT"
+  ),
   drop = TRUE
 )
