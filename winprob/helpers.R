@@ -55,3 +55,44 @@ dbCopy <- function(conn, name, value, truncate = FALSE) {
     )
   )
 }
+
+query <- function(conn, statement) {
+  result <- DBI::dbGetQuery(
+    conn,
+    statement
+  )
+
+  tibble::tibble(result)
+}
+
+dbCreateIndex <- function(conn, name, cols) {
+  ix_name <- paste(
+    "index",
+    name,
+    "on",
+    paste(cols, collapse = "_"),
+    sep = "_"
+  )
+  ix <- paste(cols, collapse = ", ")
+
+  DBI::dbExecute(
+    conn,
+    sprintf(
+      "
+      CREATE INDEX %s
+      ON %s
+      (%s)
+      ",
+      ix_name,
+      name,
+      ix
+    )
+  )
+}
+
+connect_to_db <- function() {
+  DBI::dbConnect(
+    RPostgres::Postgres(),
+    dbname = "cfb"
+  )
+}
