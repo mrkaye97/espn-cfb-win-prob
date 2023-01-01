@@ -4,11 +4,10 @@ library(cfbfastR)
 library(dplyr)
 library(DBI)
 library(bit64)
+library(secret)
 
 source("helpers.R")
 source("constants.R")
-
-conn <- connect_to_db()
 
 raw_pbp <- load_cfb_pbp(years)
 pbp_2022 <- load_cfb_pbp(2022)
@@ -28,10 +27,10 @@ pbp <- raw_pbp %>%
   )
 
 dbCopy(
-  conn,
+  db_url = get_secret("DB_URL"),
   "pbp",
   pbp,
-  drop = TRUE
+  drop = FALSE
 )
 
 dbExecute(
@@ -42,4 +41,10 @@ dbExecute(
   TYPE BIGINT
   USING play_id::BIGINT
   "
+)
+
+dbCreateIndex(
+  conn,
+  "pbp",
+  c("game_id", "play_id")
 )
