@@ -48,14 +48,19 @@ dbCopy <- function(conn, name, value, drop = FALSE, fields = NULL) {
     na = ""
   )
 
-  DBI::dbExecute(
-    conn,
-    sprintf(
-      "COPY %s FROM '%s' CSV HEADER",
-      name,
-      tmp
-    )
+  url <- secret::get_secret("DB_URL")
+
+  cmd <- glue::glue(
+    "
+    psql \\
+    -d \"{url}\" \\
+    -c \"\\COPY {name} FROM '{tmp}' WITH DELIMITER ',' CSV HEADER\"
+    "
   )
+
+  system(cmd)
+
+  invisible()
 }
 
 query <- function(conn, statement) {
@@ -92,8 +97,12 @@ dbCreateIndex <- function(conn, name, cols) {
   )
 }
 
+generate_db_conn_components <- function(url) {
+  httr::parse_url(url)
+}
+
 connect_to_db <- function(url = secret::get_secret("DB_URL")) {
-  components <- httr::parse_url(url)
+  components <- generate_db_conn_components(url)
 
   DBI::dbConnect(
     RPostgres::Postgres(),
