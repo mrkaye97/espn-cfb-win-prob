@@ -22,7 +22,17 @@ get_espn_wp_college <- function(espn_game_id) {
   espn_wp
 }
 
-dbCopy <- function(conn, name, value, truncate = FALSE) {
+dbCopy <- function(conn, name, value, drop = FALSE) {
+
+  if (isTRUE(drop)) {
+    DBI::dbExecute(
+      conn,
+      sprintf(
+        "DROP TABLE %s",
+        name
+      )
+    )
+  }
 
   if (isFALSE(DBI::dbExistsTable(conn, name))) {
     DBI::dbCreateTable(conn, name, value)
@@ -35,16 +45,6 @@ dbCopy <- function(conn, name, value, truncate = FALSE) {
     tmp,
     na = ""
   )
-
-  if (isTRUE(truncate)) {
-    DBI::dbExecute(
-      conn,
-      sprintf(
-        "TRUNCATE %s",
-        name
-      )
-    )
-  }
 
   DBI::dbExecute(
     conn,
