@@ -85,7 +85,7 @@ query <- function(conn, statement) {
 dbCreateIndex <- function(conn, name, cols) {
   ix_name <- paste(
     "index",
-    name,
+    gsub("\\.", "_", name),
     "on",
     paste(cols, collapse = "_"),
     sep = "_"
