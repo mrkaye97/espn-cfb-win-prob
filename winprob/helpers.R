@@ -22,7 +22,9 @@ get_espn_wp_college <- function(espn_game_id) {
   espn_wp
 }
 
-dbCopy <- function(conn, name, value, drop = FALSE, fields = NULL) {
+dbCopy <- function(db_url = secret::get_secret("DB_URL"), name, value, drop = FALSE, fields = NULL) {
+
+  conn <- connect_to_db(url = db_url)
 
   if (isTRUE(drop)) {
     rlang::inform(sprintf("Dropping %s", name))
@@ -39,6 +41,8 @@ dbCopy <- function(conn, name, value, drop = FALSE, fields = NULL) {
   if (isFALSE(DBI::dbExistsTable(conn, name))) {
     DBI::dbCreateTable(conn, name, rlang::`%||%`(fields, value))
   }
+
+  DBI::dbDisconnect(conn)
 
   tmp <- tempfile(fileext = ".csv")
 
