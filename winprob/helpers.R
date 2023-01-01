@@ -92,9 +92,15 @@ dbCreateIndex <- function(conn, name, cols) {
   )
 }
 
-connect_to_db <- function() {
+connect_to_db <- function(url = secret::get_secret("DB_URL")) {
+  components <- httr::parse_url(url)
+
   DBI::dbConnect(
     RPostgres::Postgres(),
-    dbname = "cfb"
+    user = components$username,
+    password = components$password,
+    host = components$hostname,
+    port = 5432,
+    dbname = components$scheme
   )
 }
