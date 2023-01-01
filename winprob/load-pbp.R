@@ -28,23 +28,8 @@ pbp <- raw_pbp %>%
 
 dbCopy(
   db_url = get_secret("DB_URL"),
-  "pbp",
-  pbp,
-  drop = FALSE
-)
-
-dbExecute(
-  conn,
-  "
-  ALTER TABLE pbp
-  ALTER COLUMN play_id
-  TYPE BIGINT
-  USING play_id::BIGINT
-  "
-)
-
-dbCreateIndex(
-  conn,
-  "pbp",
-  c("game_id", "play_id")
+  schema = "raw",
+  table = "pbp",
+  data = pbp,
+  drop = TRUE
 )
