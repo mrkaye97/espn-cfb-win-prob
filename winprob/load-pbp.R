@@ -1,11 +1,10 @@
 library(DBI)
-library(RPostgres),
+library(RPostgres)
 library(cfbfastR)
 library(dplyr)
 
 source("helpers.R")
-
-years <- 2014:2022
+source("constants.R")
 
 conn <- dbConnect(
   Postgres(),
