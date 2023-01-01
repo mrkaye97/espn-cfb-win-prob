@@ -22,24 +22,30 @@ get_espn_wp_college <- function(espn_game_id) {
   espn_wp
 }
 
-dbCopy <- function(db_url = secret::get_secret("DB_URL"), name, value, drop = FALSE, fields = NULL) {
+dbCopy <- function(db_url = secret::get_secret("DB_URL"), schema, table, data, drop = FALSE, fields = NULL) {
 
   conn <- connect_to_db(url = db_url)
 
   if (isTRUE(drop)) {
-    rlang::inform(sprintf("Dropping %s", name))
+    rlang::inform(sprintf("Dropping %s.%s", schema, table))
     DBI::dbExecute(
       conn,
       sprintf(
-        "DROP TABLE IF EXISTS %s",
-        name
+        "DROP TABLE IF EXISTS %s.%s",
+        schema,
+        table
       )
     )
-    rlang::inform(sprintf("Dropped %s", name))
+    rlang::inform(sprintf("Dropped %s.%s", schema, table))
   }
 
-  if (isFALSE(DBI::dbExistsTable(conn, name))) {
-    DBI::dbCreateTable(conn, name, rlang::`%||%`(fields, value))
+  DBI::dbExecute(
+    conn,
+    sprintf("CREATE SCHEMA IF NOT EXISTS %s", schema)
+  )
+
+  if (isFALSE(DBI::dbExistsTable(conn, DBI::Id(schema = schema, table = table)))) {
+    DBI::dbCreateTable(conn, DBI::Id(schema = schema, table = table), rlang::`%||%`(fields, data))
   }
 
   DBI::dbDisconnect(conn)
@@ -47,7 +53,7 @@ dbCopy <- function(db_url = secret::get_secret("DB_URL"), name, value, drop = FA
   tmp <- tempfile(fileext = ".csv")
 
   readr::write_csv(
-    value,
+    data,
     tmp,
     na = ""
   )
@@ -58,7 +64,7 @@ dbCopy <- function(db_url = secret::get_secret("DB_URL"), name, value, drop = FA
     "
     psql \\
     -d \"{url}\" \\
-    -c \"\\COPY {name} FROM '{tmp}' WITH DELIMITER ',' CSV HEADER\"
+    -c \"\\COPY {schema}.{table} FROM '{tmp}' WITH DELIMITER ',' CSV HEADER\"
     "
   )
 
