@@ -7,13 +7,12 @@ library(bit64)
 library(secret)
 
 source("helpers.R")
-source("constants.R")
 
 conn <- connect_to_db()
 
 games <- query(
   conn,
-  "select distinct game_id from pbp where year = 2022"
+  "select distinct game_id from pbp"
 )$game_id
 
 safely_get_wp <- safely(get_espn_wp_college)
@@ -21,7 +20,7 @@ safely_get_wp <- safely(get_espn_wp_college)
 plan(multisession, workers = 10)
 
 wps <- future_map_dfr(
-  games[1:10],
+  games,
   ~ {
     result <- safely_get_wp(.x) |>
       pluck("result")
@@ -32,8 +31,8 @@ wps <- future_map_dfr(
       )
     }
 
-    result |>
-      tibble() |>
+    result %>%
+      tibble() %>%
       transmute(
         game_id = as.integer(espn_game_id),
         play_id = as.character(as.integer64(play_id)),
@@ -45,7 +44,7 @@ wps <- future_map_dfr(
 dbCopy(
   db_url = get_secret("DB_URL"),
   schema = "raw",
-  table = "win_probs",
+  table = "espn_win_probs",
   data = wps,
   fields = list(
     game_id = "BIGINT",
