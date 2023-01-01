@@ -1,3 +1,5 @@
+`%||%` <- rlang::`%||%`
+
 get_espn_wp_college <- function(espn_game_id) {
   espn_wp <- data.frame()
   tryCatch(
