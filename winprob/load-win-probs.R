@@ -3,6 +3,7 @@ library(dplyr)
 library(purrr)
 library(furrr)
 library(dplyr)
+library(bit64)
 
 source("helpers.R")
 source("constants.R")
@@ -34,7 +35,7 @@ wps <- future_map_dfr(
       tibble() |>
       mutate(
         espn_game_id = as.integer(espn_game_id),
-        play_id = as.character(play_id)
+        play_id = as.character(as.integer64(id_play))
       )
   }
 )
