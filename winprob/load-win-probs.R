@@ -33,21 +33,38 @@ wps <- future_map_dfr(
 
     result |>
       tibble() |>
-      mutate(
-        espn_game_id = as.integer(espn_game_id),
-        play_id = as.character(as.integer64(id_play))
+      transmute(
+        game_id = as.integer(espn_game_id),
+        play_id = as.character(as.integer64(id_play)),
+        home_win_prob = home_win_percentage
       )
   }
 )
 
 dbCopy(
-  conn,
+  db_url = get_secret("DB_URL"),
   "wps",
   wps,
   fields = list(
-    espn_game_id = "BIGINT",
+    game_id = "BIGINT",
     play_id = "BIGINT",
-    home_win_percentage = "FLOAT"
+    home_win_prob = "FLOAT"
   ),
   drop = TRUE
+)
+
+dbExecute(
+  conn,
+  "
+  ALTER TABLE wps
+  ALTER COLUMN play_id
+  TYPE BIGINT
+  USING play_id::BIGINT
+  "
+)
+
+dbCreateIndex(
+  conn,
+  "wps",
+  c("game_id", "play_id")
 )
