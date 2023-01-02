@@ -93,7 +93,7 @@ walk(
     imap(
       plots,
       ~ ggsave(
-        sprintf("../plots/calibration/%s/%.svg", period, .y),
+        sprintf("../plots/calibration/%s/%s.svg", period, .y),
         .x,
         device = "svg"
       )
