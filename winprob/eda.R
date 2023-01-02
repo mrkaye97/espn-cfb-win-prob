@@ -10,7 +10,7 @@ result <- query(
   conn,
   "
   SELECT *
-  FROM cfb.pbp
+  FROM cfb.espn_diagnostics
   WHERE home_win_prob IS NOT NULL
   "
 )
@@ -108,4 +108,16 @@ first_win_prob %>%
     estimate = home_win_prob,
     event_level = "second",
     conf_level = 0.80
+  )
+
+first_win_prob %>%
+  filter(
+    !is.na(teams__home_ranking) | !is.na(teams__away_ranking)
+  ) %>%
+  cal_plot_breaks(
+    truth = home_win,
+    estimate = home_win_prob,
+    event_level = "second",
+    conf_level = 0.80,
+    num_breaks = 20
   )
