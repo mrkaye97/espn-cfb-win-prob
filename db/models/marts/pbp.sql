@@ -7,7 +7,7 @@
 }}
 
 WITH pbp AS (
-    SELECT *
+    SELECT DISTINCT *
     FROM {{ source("raw", "pbp") }}
 ),
 last_plays AS (
@@ -23,10 +23,10 @@ game_winners as (
             ELSE pbp.defense_play
         END = pbp.home AS home_win
     FROM last_plays lp
-    JOIN pbp USING(play_id)
+    JOIN pbp USING(game_id, play_id)
 ),
 home_away_scores AS (
-    SELECT
+    SELECT DISTINCT
         game_id,
         play_id,
         CASE WHEN offense_play = home THEN offense_score ELSE defense_score END AS home_score,
