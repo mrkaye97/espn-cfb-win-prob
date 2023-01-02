@@ -32,21 +32,6 @@ pbp <- raw_pbp %>%
   mutate(
     game_id = as.integer(game_id),
     play_id = as.integer(play_id)
-  ) %>%
-  select(
-    year,
-    week,
-    play_id,
-    game_id,
-    offense_play,
-    defense_play,
-    offense_score,
-    defense_score,
-    home,
-    away,
-    clock_minutes = clock.minutes,
-    clock_seconds = clock.seconds,
-    period
   )
 
 dbCopy(
