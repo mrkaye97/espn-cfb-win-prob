@@ -5,3 +5,5 @@ sources:
     tables:
       - name: pbp
       - name: espn_win_probs
+      - name: lines
+      - name: rankings
