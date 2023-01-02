@@ -4,6 +4,7 @@ library(yardstick)
 library(ggplot2)
 library(ggthemes)
 library(purrr)
+library(svglite)
 
 source("helpers.R")
 
@@ -92,9 +93,9 @@ walk(
     imap(
       plots,
       ~ ggsave(
-        sprintf("../plots/calibration/%s/%s.jpg", period, .y),
+        sprintf("../plots/calibration/%s/%.svg", period, .y),
         .x,
-        device = "jpg"
+        device = "svg"
       )
     )
   }
