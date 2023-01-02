@@ -8,6 +8,7 @@ library(secret)
 library(purrr)
 library(furrr)
 library(lubridate)
+library(stringr)
 
 source("helpers.R")
 source("constants.R")
@@ -34,7 +35,7 @@ pbp <- future_map_dfr(
     mutate(
       data,
       game_id = .x,
-      play_id = as.integer(stringr::str_sub(plays_id, nchar(.x) + 1, nchar(plays_id))),
+      play_id = as.integer(str_sub(plays_id, nchar(.x) + 1, nchar(plays_id))),
       clock_time_minutes = ms(plays_clock_display_value) %>% minute(),
       clock_time_seconds = ms(plays_clock_display_value) %>% second(),
     )
