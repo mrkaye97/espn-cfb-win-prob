@@ -101,3 +101,93 @@ walk(
   }
 )
 
+result %>%
+  filter(
+    home_win_prob > .99 | home_win_prob < 0.01,
+    !is.na(teams__home_ranking) & !is.na(teams__away_ranking)
+  ) %>%
+  mutate(
+    is_odd = (home_win_prob > 0.5 & !home_win) | (home_win_prob < 0.5 & home_win)
+  ) %>%
+  count(is_odd) %>%
+  mutate(prop = n / sum(n))
+
+kickoff %>%
+  filter(
+    !is.na(teams__home_ranking) & !is.na(teams__away_ranking)
+  ) %>%
+  roc_auc(
+    truth = home_win,
+    estimate = home_win_prob,
+    event_level = "second"
+  )
+
+money_line_to_odds <- function(line) {
+  ifelse(
+    line < 0,
+    abs(line) / (100 + abs(line)),
+    100 / (100 + line)
+  )
+}
+
+brier_score <- function(truth, estimate) {
+  mean((truth - estimate)^2)
+}
+
+brier_skill_score <- function(truth, estimate, ref) {
+  ref_bs <- brier_score(truth, ref)
+  estimate_bs <- brier_score(truth, estimate)
+
+  1 - (estimate_bs / ref_bs)
+}
+
+line_odds <- kickoff %>%
+  filter(
+    !is.na(home_moneyline),
+    !is.na(away_moneyline)
+  ) %>%
+  mutate(
+    home_moneyline_odds = money_line_to_odds(home_moneyline),
+    away_moneyline_odds = 1 - money_line_to_odds(away_moneyline),
+    avg_line_odds = (home_moneyline_odds + away_moneyline_odds) / 2
+  )
+
+
+
+line_odds %>%
+  filter(!is.na(avg_line_odds)) %>%
+  select(
+    game_id,
+    play_id,
+    avg_line_odds,
+    home_win,
+    home_win_prob
+  ) %>%
+  summarize(
+    bs_line = brier_score(
+      as.numeric(home_win) - 1,
+      avg_line_odds
+    ),
+    bs_espn = brier_score(
+      as.numeric(home_win) - 1,
+      home_win_prob
+    ),
+    bss = brier_skill_score(
+      as.numeric(home_win) - 1,
+      home_win_prob,
+      avg_line_odds
+    )
+  )
+
+line_odds %>%
+  tidyr::pivot_longer(
+    cols = c(home_win_prob, avg_line_odds),
+    names_to = "estimator",
+    values_to = "estimate"
+  ) %>%
+  cal_plot_windowed(
+    truth = home_win,
+    estimate = estimate,
+    event_level = "second",
+    group = estimator
+  )
