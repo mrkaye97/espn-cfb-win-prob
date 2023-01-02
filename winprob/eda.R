@@ -45,7 +45,7 @@ generate_plot <- function(data, ...) {
     event_level = "second",
     num_breaks = 20
   ) +
-    labs(...) +
+    labs(..., caption = sprintf("Note: Total N size = %s", nrow(data))) +
     theme_fivethirtyeight() +
     theme(
       axis.title = element_text()
