@@ -37,13 +37,11 @@ halftime <- result %>%
   )
 
 generate_plot <- function(data, ...) {
-  f <- if (nrow(data) > 1000) cal_plot_breaks else cal_plot_windowed
-  f(
+  cal_plot_windowed(
     data,
     truth = home_win,
     estimate = home_win_prob,
-    event_level = "second",
-    num_breaks = 20
+    event_level = "second"
   ) +
     labs(..., caption = sprintf("Note: Total N size = %s", nrow(data))) +
     theme_fivethirtyeight() +
@@ -141,7 +139,7 @@ brier_skill_score <- function(truth, estimate, ref) {
   1 - (estimate_bs / ref_bs)
 }
 
-line_odds <- kickoff %>%
+line_odds <- halftime %>%
   filter(
     !is.na(home_moneyline),
     !is.na(away_moneyline)
