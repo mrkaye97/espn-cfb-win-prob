@@ -1,52 +1,111 @@
 library(dplyr)
+library(probably)
+library(yardstick)
 
 source("helpers.R")
 
 conn <- connect_to_db()
 
-winners <- query(
+result <- query(
   conn,
-  '
-  with last_plays as (
-    select game_id, max(id_play) as id_play
-    from pbp
-    group by game_id
-  ),
-  game_winners as (
-    select distinct
-      lp.game_id,
-      case
-        when pbp.offense_score > pbp.defense_score then pbp.offense_play
-        else pbp.defense_play
-      end = pbp.home as home_win
-    from last_plays lp
-    join pbp using(game_id, id_play)
-  ),
-  clocks as (
-    select game_id, id_play, "clock.minutes" as minutes, "clock.seconds" as seconds, period
-    from pbp
-  ),
-  scores as (
-    select
-      game_id, id_play,
-      case when offense_play = home then offense_score else defense_score end as home_score,
-      case when offense_play = away then offense_score else defense_score end as away_score
-    from pbp
-  ),
-  out as (
-    select
-      pbp.game_id, pbp.id_play,
-      pbp.home, pbp.away,
-      c.period, c.minutes, c.seconds,
-      gw.home_win, wps.home_win_percentage
-    from pbp
-    join clocks c on c.id_play = pbp.id_play
-    join game_winners gw on pbp.game_id = gw.game_id
-    join wps on wps.play_id = pbp.id_play
-    join scores s on s.id_play = pbp.id_play
+  "
+  SELECT *
+  FROM cfb.pbp
+  WHERE home_win_prob IS NOT NULL
+  "
+)
+
+first_win_prob <- result %>%
+  group_by(game_id) %>%
+  slice_min(play_id, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(
+    home_win = as.factor(home_win)
   )
 
-  select * from clocks
+halftime <- result %>%
+  group_by(game_id) %>%
+  filter(clock__period == 3) %>%
+  slice_min(play_id, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(
+    home_win = as.factor(home_win)
+  )
 
-  '
+probably::cal_plot_breaks(
+  first_win_prob,
+  truth = home_win,
+  estimate = home_win_prob,
+  event_level = "second",
+  num_breaks = 20
 )
+
+probably::cal_plot_breaks(
+  halftime,
+  truth = home_win,
+  estimate = home_win_prob,
+  event_level = "second",
+  num_breaks = 20
+)
+
+roc_auc(
+  first_win_prob,
+  truth = home_win,
+  estimate = home_win_prob,
+  event_level = "second"
+)
+
+yardstick::mn_log_loss(
+  first_win_prob,
+  truth = home_win,
+  estimate = home_win_prob,
+  event_level = "second"
+)
+
+top_teams <- c(
+  ## B1G
+  "Michigan",
+  "Ohio State",
+
+  ## ACC
+  "Clemson",
+
+  ## SEC
+  "Alabama",
+  "LSU",
+  "Georgia",
+  "Tennessee",
+
+  ## Big XII
+  "Oklahoma",
+  "TCU",
+  "Texas",
+
+  ## PAC 12
+  "Oregon",
+  "Utah",
+  "USC"
+)
+
+first_win_prob %>%
+  filter(
+    teams__home %in% top_teams |
+    teams__away %in% top_teams
+  ) %>%
+  roc_auc(
+    truth = home_win,
+    estimate = home_win_prob,
+    event_level = "second"
+  )
+
+first_win_prob %>%
+  filter(
+    teams__home %in% top_teams |
+    teams__away %in% top_teams
+  ) %>%
+  cal_plot_windowed(
+    truth = home_win,
+    estimate = home_win_prob,
+    event_level = "second",
+    conf_level = 0.80
+  )
