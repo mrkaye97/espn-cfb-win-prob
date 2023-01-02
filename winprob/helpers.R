@@ -1,25 +1,54 @@
 get_espn_wp_college <- function(espn_game_id) {
-  espn_wp <- data.frame()
-  tryCatch(
-    expr = {
-      espn_wp <-
-        httr::GET(url = glue::glue("http://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event={espn_game_id}")) %>%
-        httr::content(as = "text", encoding = "UTF-8") %>%
-        jsonlite::fromJSON(flatten = TRUE) %>%
-        purrr::pluck("winprobability") %>%
-        janitor::clean_names() %>%
-        dplyr::mutate(
-          espn_game_id = stringr::str_sub(play_id, end = stringr::str_length(espn_game_id))
-        ) %>%
-        dplyr::select(espn_game_id, play_id, home_win_percentage)
-      message(glue::glue("{Sys.time()}: Scraping ESPN wp data for GameID '{espn_game_id}'..."))
-    },
-    error = function(e) {
-      message(glue::glue("{Sys.time()}: GameID '{espn_game_id}' invalid or no wp data available!"))
-    }
+  message(glue::glue("{Sys.time()}: Scraping ESPN wp data for GameID '{espn_game_id}'..."))
+  response <- httr::RETRY(
+    verb = "GET",
+    url = glue::glue("http://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event={espn_game_id}"),
+    times = 5,
+    terminate_on = c(404)
   )
 
-  espn_wp
+  if (response$status_code != 200) {
+    return(
+      list(
+        result = tibble::tibble(),
+        message = "Non-200",
+        response = response,
+        game_id = espn_game_id
+      )
+    )
+  }
+
+  win_probs <- response %>%
+    httr::content(flatten = TRUE) %>%
+    purrr::pluck("winprobability")
+
+  if (length(win_probs) == 0) {
+    return(
+      list(
+        result = tibble::tibble(),
+        message = "No win probabilities returned",
+        response = response,
+        game_id = espn_game_id
+      )
+    )
+  }
+
+  out <- win_probs %>%
+    dplyr::bind_rows() %>%
+    janitor::clean_names() %>%
+    dplyr::mutate(
+      espn_game_id = stringr::str_sub(play_id, end = stringr::str_length(espn_game_id))
+    ) %>%
+    dplyr::select(espn_game_id, play_id, home_win_percentage)
+
+  return(
+    list(
+      result = out,
+      message = "Success",
+      response = response,
+      game_id = espn_game_id
+    )
+  )
 }
 
 dbCopy <- function(db_url = secret::get_secret("DB_URL"), schema, table, data, drop = FALSE, fields = NULL) {
