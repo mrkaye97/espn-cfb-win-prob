@@ -1,11 +1,6 @@
-Welcome to your new dbt project!
+## dbt
 
-### Using the starter project
-
-Try running the following commands:
-- dbt run
-- dbt test
-
+This directory contains a minimal [dbt](https://www.getdbt.com/) project for doing some transformations inside of the Postgres database after loading the raw CFB data.
 
 ### Resources:
 - Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
