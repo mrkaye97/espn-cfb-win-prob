@@ -58,11 +58,8 @@ dbCopy(
   drop = TRUE
 )
 
-dbExecute(
+dbCreateIndex(
   conn,
-  "
-  CREATE INDEX index_raw_wps_on_game_id_play_id
-  ON raw.espn_win_probs
-  (game_id, play_id)
-  "
+  "espn_win_probs",
+  c("game_id", "play_id")
 )

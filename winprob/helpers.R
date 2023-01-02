@@ -82,10 +82,10 @@ query <- function(conn, statement) {
   tibble::tibble(result)
 }
 
-dbCreateIndex <- function(conn, name, cols) {
+dbCreateIndex <- function(conn, table, cols) {
   ix_name <- paste(
     "index",
-    gsub("\\.", "_", name),
+    table,
     "on",
     paste(cols, collapse = "_"),
     sep = "_"
@@ -97,11 +97,11 @@ dbCreateIndex <- function(conn, name, cols) {
     sprintf(
       "
       CREATE INDEX %s
-      ON %s
+      ON raw.%s
       (%s)
       ",
       ix_name,
-      name,
+      table,
       ix
     )
   )

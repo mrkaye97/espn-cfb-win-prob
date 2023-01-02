@@ -44,11 +44,8 @@ dbCopy(
 
 conn <- connect_to_db()
 
-dbExecute(
+dbCreateIndex(
   conn,
-  "
-  CREATE INDEX index_raw_pbp_on_game_id_play_id
-  ON raw.pbp
-  (game_id, play_id)
-  "
+  "pbp",
+  c("game_id", "play_id")
 )

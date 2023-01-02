@@ -31,21 +31,15 @@ dbCopy(
 
 conn <- connect_to_db()
 
-dbExecute(
+dbCreateIndex(
   conn,
-  "
-  CREATE INDEX index_raw_lines_on_game_id
-  ON raw.lines
-  (game_id)
-  "
+  "lines",
+  "game_id"
 )
 
-dbExecute(
+dbCreateIndex(
   conn,
-  "
-  CREATE INDEX index_raw_rankings_on_school
-  ON raw.rankings
-  (school)
-  "
+  "rankings",
+  "school"
 )
 
