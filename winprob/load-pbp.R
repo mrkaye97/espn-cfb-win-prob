@@ -31,13 +31,13 @@ pbp <- future_map_dfr(
       return(tibble())
     }
 
-    data %>%
-      mutate(game_id = .x) %>%
-      mutate(
-        play_id = as.integer(stringr::str_sub(plays_id, nchar(.x) + 1, nchar(plays_id))),
-        clock_time_minutes = ms(plays_clock_display_value) %>% minute(),
-        clock_time_seconds = ms(plays_clock_display_value) %>% second(),
-      )
+    mutate(
+      data,
+      game_id = .x,
+      play_id = as.integer(stringr::str_sub(plays_id, nchar(.x) + 1, nchar(plays_id))),
+      clock_time_minutes = ms(plays_clock_display_value) %>% minute(),
+      clock_time_seconds = ms(plays_clock_display_value) %>% second(),
+    )
   },
   .options = furrr_options(seed = NULL)
 )
