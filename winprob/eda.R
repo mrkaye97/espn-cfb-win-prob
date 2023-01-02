@@ -1,6 +1,9 @@
 library(dplyr)
 library(probably)
 library(yardstick)
+library(ggplot2)
+library(ggthemes)
+library(purrr)
 
 source("helpers.R")
 
@@ -15,7 +18,7 @@ result <- query(
   "
 )
 
-first_win_prob <- result %>%
+kickoff <- result %>%
   group_by(game_id) %>%
   slice_min(play_id, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
@@ -32,92 +35,68 @@ halftime <- result %>%
     home_win = as.factor(home_win)
   )
 
-probably::cal_plot_breaks(
-  first_win_prob,
-  truth = home_win,
-  estimate = home_win_prob,
-  event_level = "second",
-  num_breaks = 20
-)
-
-probably::cal_plot_breaks(
-  halftime,
-  truth = home_win,
-  estimate = home_win_prob,
-  event_level = "second",
-  num_breaks = 20
-)
-
-roc_auc(
-  first_win_prob,
-  truth = home_win,
-  estimate = home_win_prob,
-  event_level = "second"
-)
-
-yardstick::mn_log_loss(
-  first_win_prob,
-  truth = home_win,
-  estimate = home_win_prob,
-  event_level = "second"
-)
-
-top_teams <- c(
-  ## B1G
-  "Michigan",
-  "Ohio State",
-
-  ## ACC
-  "Clemson",
-
-  ## SEC
-  "Alabama",
-  "LSU",
-  "Georgia",
-  "Tennessee",
-
-  ## Big XII
-  "Oklahoma",
-  "TCU",
-  "Texas",
-
-  ## PAC 12
-  "Oregon",
-  "Utah",
-  "USC"
-)
-
-first_win_prob %>%
-  filter(
-    teams__home %in% top_teams |
-    teams__away %in% top_teams
-  ) %>%
-  roc_auc(
-    truth = home_win,
-    estimate = home_win_prob,
-    event_level = "second"
-  )
-
-first_win_prob %>%
-  filter(
-    teams__home %in% top_teams |
-    teams__away %in% top_teams
-  ) %>%
-  cal_plot_windowed(
+generate_plot <- function(data, ...) {
+  f <- if (nrow(data) > 1000) cal_plot_breaks else cal_plot_windowed
+  f(
+    data,
     truth = home_win,
     estimate = home_win_prob,
     event_level = "second",
-    conf_level = 0.80
-  )
-
-first_win_prob %>%
-  filter(
-    !is.na(teams__home_ranking) | !is.na(teams__away_ranking)
-  ) %>%
-  cal_plot_breaks(
-    truth = home_win,
-    estimate = home_win_prob,
-    event_level = "second",
-    conf_level = 0.80,
     num_breaks = 20
+  ) +
+    labs(...) +
+    theme_fivethirtyeight() +
+    theme(
+      axis.title = element_text()
+    )
+}
+
+generate_all_plots <- function(period) {
+  data <- get(period)
+  title_period <- switch(
+    period,
+    "kickoff" = "Kickoff",
+    "halftime" = "Halftime",
+    stop("Sorry, I don't recognize that data")
   )
+  title <- sprintf("Calibration at %s", title_period)
+
+  list(
+    all = generate_plot(data, title = title),
+    ranked = generate_plot(
+      filter(
+        data,
+        !is.na(teams__home_ranking) | !is.na(teams__away_ranking)
+      ),
+      title = title,
+      subtitle = "All ranked teams"
+    ),
+    top_15 = generate_plot(
+      filter(
+        data,
+        teams__home_ranking <= 15 | teams__away_ranking <= 15
+      ),
+      title = title,
+      subtitle = "Only including teams in the top 15"
+    )
+  )
+}
+
+walk(
+  c("kickoff", "halftime"),
+  function(period) {
+
+    plots <- generate_all_plots(period)
+    dir.create(sprintf("../plots/calibration/%s", period), recursive = TRUE)
+
+    imap(
+      plots,
+      ~ ggsave(
+        sprintf("../plots/calibration/%s/%s.jpg", period, .y),
+        .x,
+        device = "jpg"
+      )
+    )
+  }
+)
+
