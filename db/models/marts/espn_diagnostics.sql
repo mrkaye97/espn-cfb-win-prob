@@ -8,20 +8,17 @@
 
 WITH pbp AS (
     SELECT DISTINCT 
-        year,
         season,
         week,
         play_id,
         game_id,
-        offense_play,
-        defense_play,
-        offense_score,
-        defense_score,
-        home,
-        away,
-        "clock.minutes" AS clock_minutes,
-        "clock.seconds" AS clock_seconds,
-        period
+        home_team,
+        away_team,
+        plays_home_score AS home_score,
+        plays_away_score AS away_score,
+        clock_time_minutes AS clock_minutes,
+        clock_time_seconds AS clock_seconds,
+        plays_period_number AS period
     FROM {{ source("raw", "pbp") }}
 ),
 last_plays AS (
@@ -32,20 +29,9 @@ last_plays AS (
 game_winners as (
     SELECT DISTINCT
         lp.game_id,
-        CASE
-            WHEN pbp.offense_score > pbp.defense_score THEN pbp.offense_play
-            ELSE pbp.defense_play
-        END = pbp.home AS home_win
+        home_score > away_score AS home_win
     FROM last_plays lp
     JOIN pbp USING(game_id, play_id)
-),
-home_away_scores AS (
-    SELECT DISTINCT
-        game_id,
-        play_id,
-        CASE WHEN offense_play = home THEN offense_score ELSE defense_score END AS home_score,
-        CASE WHEN offense_play = away THEN offense_score ELSE defense_score END AS away_score
-    FROM pbp
 ),
 win_probs AS (
     SELECT DISTINCT game_id::INT, play_id::INT, home_win_prob
@@ -65,13 +51,13 @@ rankings AS (
 SELECT DISTINCT
     p.game_id,
     p.play_id,
-    p.home AS teams__home,
-    p.away AS teams__away,
+    p.home_team,
+    p.away_team,
     p.clock_minutes AS clock__minutes_remaining,
     p.clock_seconds AS clock__seconds_remaining,
     p.period AS clock__period,
-    s.home_score AS scores__home,
-    s.away_score AS scores__away,
+    p.home_score,
+    p.away_score,
     wp.home_win_prob,
     gw.home_win,
     l.home_moneyline,
@@ -79,9 +65,8 @@ SELECT DISTINCT
     r1.ap_ranking AS teams__home_ranking,
     r2.ap_ranking AS teams__away_ranking
 FROM pbp p
-LEFT JOIN home_away_scores s USING(game_id, play_id)
 LEFT JOIN win_probs wp USING(game_id, play_id)
 LEFT JOIN game_winners gw ON p.game_id = gw.game_id
 LEFT JOIN lines l ON p.game_id = l.game_id
-LEFT JOIN rankings r1 ON r1.season = p.season AND r1.week = p.week AND r1.school = p.home
-LEFT JOIN rankings r2 ON r2.season = p.season AND r2.week = p.week AND r2.school = p.away
+LEFT JOIN rankings r1 ON r1.season = p.season AND r1.week = p.week AND r1.school = p.home_team
+LEFT JOIN rankings r2 ON r2.season = p.season AND r2.week = p.week AND r2.school = p.away_team
