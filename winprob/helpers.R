@@ -3,7 +3,7 @@ get_espn_wp_college <- function(espn_game_id) {
   response <- httr::RETRY(
     verb = "GET",
     url = glue::glue("http://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event={espn_game_id}"),
-    times = 5,
+    times = 7,
     terminate_on = c(404)
   )
 

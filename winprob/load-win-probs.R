@@ -49,14 +49,14 @@ successes <- wps %>%
 
 failures <- keep(
     wps,
-    ~ nrow(.x$result) == 0
+    ~ nrow(.x$result) == 0 && .x$response$status_code != 200 && .x$response$status_code != 404
 )
 
 dbCopy(
   db_url = get_secret("DB_URL"),
   schema = "raw",
   table = "espn_win_probs",
-  data = wps,
+  data = successes,
   fields = list(
     game_id = "INT",
     play_id = "INT",
