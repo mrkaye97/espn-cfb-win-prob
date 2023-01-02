@@ -25,24 +25,24 @@ plan(multisession, workers = 10)
 pbp <- future_map_dfr(
   game_ids,
   ~ {
-    espn_cfb_pbp(.x) %>%
+    data <- tryCatch({espn_cfb_pbp(.x)}, error = function(e) tibble())
+
+    if (nrow(data) == 0L) {
+      return(tibble())
+    }
+
+    data %>%
       mutate(game_id = .x) %>%
-      transmute(
-        season,
-        week,
-        game_id,
+      mutate(
         play_id = as.integer(stringr::str_sub(plays_id, nchar(.x) + 1, nchar(plays_id))),
-        home_team,
-        away_team,
-        home_score = plays_home_score,
-        away_score = plays_away_score,
-        wall_clock_time = plays_wallclock,
         clock_time_minutes = ms(plays_clock_display_value) %>% minute(),
         clock_time_seconds = ms(plays_clock_display_value) %>% second(),
-        clock_period = plays_period_number
       )
-  }
+  },
+  .options = furrr_options(seed = NULL)
 )
+
+plan(sequential)
 
 dbCopy(
   db_url = get_secret("DB_URL"),
