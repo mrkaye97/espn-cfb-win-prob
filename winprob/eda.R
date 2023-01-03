@@ -27,6 +27,20 @@ result <- result %>%
   ) %>%
   ungroup()
 
+result <- result %>%
+  mutate(
+    time_counter = as.integer(
+      paste(
+        clock__period,
+        stringr::str_pad(15 - clock__minutes_remaining, 2, "left", "0"),
+        stringr::str_pad(60 - clock__seconds_remaining, 2, "left", "0"),
+        sep = ""
+      )
+    ),
+    .after = game_id
+  )
+
+
 kickoff <- result %>%
   group_by(game_id) %>%
   slice_min(play_id, n = 1, with_ties = FALSE) %>%
@@ -162,7 +176,7 @@ brier_skill_score <- function(truth, estimate, ref) {
   1 - (estimate_bs / ref_bs)
 }
 
-line_odds <- halftime %>%
+line_odds <- kickoff %>%
   filter(
     !is.na(home_moneyline),
     !is.na(away_moneyline)
@@ -172,8 +186,6 @@ line_odds <- halftime %>%
     away_moneyline_odds = 1 - money_line_to_odds(away_moneyline),
     avg_line_odds = (home_moneyline_odds + away_moneyline_odds) / 2
   )
-
-
 
 line_odds %>%
   filter(!is.na(avg_line_odds)) %>%
