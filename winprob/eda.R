@@ -19,6 +19,14 @@ result <- query(
   "
 )
 
+result <- result %>%
+  group_by(game_id) %>%
+  filter(
+    all(home_score >= 0),
+    all(away_score >= 0)
+  ) %>%
+  ungroup()
+
 kickoff <- result %>%
   group_by(game_id) %>%
   slice_min(play_id, n = 1, with_ties = FALSE) %>%
@@ -99,16 +107,31 @@ walk(
   }
 )
 
-result %>%
-  filter(
-    home_win_prob > .99 | home_win_prob < 0.01,
-    !is.na(teams__home_ranking) & !is.na(teams__away_ranking)
-  ) %>%
-  mutate(
-    is_odd = (home_win_prob > 0.5 & !home_win) | (home_win_prob < 0.5 & home_win)
-  ) %>%
-  count(is_odd) %>%
-  mutate(prop = n / sum(n))
+generate_diagnostic <- function(mins_out) {
+  result %>%
+    filter(
+      home_win_prob > .99 | home_win_prob < 0.01,
+      (clock__minutes_remaining == mins_out) & (clock__period == 4)
+    ) %>%
+    group_by(game_id, home_favored = home_win_prob > 0.5) %>%
+    summarize(
+      mean_home_win_prob = mean(home_win_prob),
+      home_win = first(home_win),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      is_unlikely_outcome = (mean_home_win_prob > 0.5 & !home_win) | (mean_home_win_prob < 0.5 & home_win)
+    ) %>%
+    summarize(
+      mins_remaining = mins_out,
+      unlikely_event_prob_given = 100 * (1 - mean(ifelse(mean_home_win_prob < 0.5, 1 - mean_home_win_prob, mean_home_win_prob))),
+      unlikely_event_actually_happens = 100 * (sum(is_unlikely_outcome) / n()),
+      n = n()
+    )
+}
+
+map_dfr(1:15, generate_diagnostic)
+
 
 kickoff %>%
   filter(
