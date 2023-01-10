@@ -10,8 +10,8 @@ library(furrr)
 library(lubridate)
 library(stringr)
 
-source("helpers.R")
-source("constants.R")
+source("R/helpers.R")
+source("R/constants.R")
 
 Sys.setenv(CFBD_API_KEY = get_secret("CFBD_API_KEY"))
 

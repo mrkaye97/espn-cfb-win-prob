@@ -7,7 +7,7 @@ library(bit64)
 library(secret)
 library(DBI)
 
-source("helpers.R")
+source("R/helpers.R")
 
 conn <- connect_to_db()
 
