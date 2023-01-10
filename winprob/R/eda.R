@@ -10,6 +10,7 @@ Sys.setenv(R_SECRET_VAULT = "vault")
 
 source("R/helpers.R")
 source("R/data-wrangling.R")
+source("R/diagnostics.R")
 source("R/plotting.R")
 
 conn <- connect_to_db()
@@ -87,36 +88,38 @@ extreme_prediction_games <- clean %>%
     extreme_away_win_prob | extreme_home_win_prob
   )
 
-extreme_prediction_games %>%
-  mutate(
-    is_extreme_event = (mean_home_win_prob > 0.5 & !home_win) | (mean_home_win_prob < 0.5 & home_win)
-  ) %>%
-  count(is_extreme_event) %>%
-  mutate(
-    prop = n / sum(n)
-  )
-
 kickoff %>%
   filter(
-    !is.na(teams__home_ranking) & !is.na(teams__away_ranking)
+  ) %>%
+  group_by(
+    num_ranked = case_when(
+      !is.na(teams__home_ranking) & !is.na(teams__away_ranking) ~ "both",
+      !is.na(teams__home_ranking) | !is.na(teams__away_ranking) ~ "one",
+      TRUE ~ "none"
+    )
   ) %>%
   roc_auc(
-    truth = home_win,
+    truth = home_win_fct,
     estimate = home_win_prob,
     event_level = "second"
   )
 
-
-line_odds <- kickoff %>%
-  filter(
-    !is.na(home_moneyline),
-    !is.na(away_moneyline)
+kickoff %>%
+  group_by(
+    num_ranked = case_when(
+      !is.na(teams__home_ranking) & !is.na(teams__away_ranking) ~ "both",
+      !is.na(teams__home_ranking) | !is.na(teams__away_ranking) ~ "one",
+      TRUE ~ "none"
+    )
   ) %>%
-  mutate(
-    home_moneyline_odds = money_line_to_odds(home_moneyline),
-    away_moneyline_odds = 1 - money_line_to_odds(away_moneyline),
-    avg_line_odds = (home_moneyline_odds + away_moneyline_odds) / 2
+  cal_plot_windowed(
+    truth = home_win_fct,
+    estimate = home_win_prob,
+    event_level = "second",
+    conf_level = 0.80
   )
+
+line_odds <- attach_line_odds(kickoff)
 
 line_odds %>%
   filter(!is.na(avg_line_odds)) %>%
@@ -150,7 +153,7 @@ line_odds %>%
     values_to = "estimate"
   ) %>%
   cal_plot_windowed(
-    truth = home_win,
+    truth = home_win_fct,
     estimate = estimate,
     event_level = "second",
     group = estimator

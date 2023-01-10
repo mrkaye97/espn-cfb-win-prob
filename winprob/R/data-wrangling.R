@@ -54,3 +54,15 @@ enforce_rough_monotonicity <- function(data) {
     )
 }
 
+attach_line_odds <- function(data) {
+  data %>%
+    filter(
+      !is.na(home_moneyline),
+      !is.na(away_moneyline)
+    ) %>%
+      mutate(
+        home_moneyline_odds = money_line_to_odds(home_moneyline),
+        away_moneyline_odds = 1 - money_line_to_odds(away_moneyline),
+        avg_line_odds = (home_moneyline_odds + away_moneyline_odds) / 2
+      )
+}
