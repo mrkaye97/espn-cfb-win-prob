@@ -117,6 +117,11 @@ kickoff %>%
     estimate = home_win_prob,
     event_level = "second",
     conf_level = 0.80
+  ) %>%
+  ggsave(
+    filename = "../plots/calibration/kickoff/grouped.svg",
+    plot = .,
+    device = "svg"
   )
 
 line_odds <- attach_line_odds(kickoff)
