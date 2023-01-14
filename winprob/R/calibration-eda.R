@@ -57,7 +57,7 @@ kickoff %>%
   ) %>%
   style_plot() %>%
   ggsave(
-    filename = "../plots/calibration/kickoff/grouped.svg",
+    filename = "../plots/calibration/kickoff/grouped-by-num-ranked.svg",
     plot = .,
     device = "svg"
   )
