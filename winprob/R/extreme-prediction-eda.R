@@ -84,11 +84,11 @@ c("both", "one", "neither", "all") %>%
         )
 
       list(
-        ranked = .y,
-        proportion = paste0(round(100 * odd_result_prop, 2), "%"),
-        lo = paste0(round(100 * ci[1], 2), "%"),
-        hi = paste0(round(100 * ci[2], 2), "%"),
-        n = nrow(.x)
+        "Ranked" = .y,
+        "Overall Win %" = paste0(round(100 * odd_result_prop, 2), "%"),
+        "Win % CI Lower Bound" = paste0(round(100 * ci[1], 2), "%"),
+        "Win % CI Upper Bound" = paste0(round(100 * ci[2], 2), "%"),
+        "N" = nrow(.x)
       )
     }
   ) %>%
