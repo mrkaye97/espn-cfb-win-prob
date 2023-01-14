@@ -81,15 +81,14 @@ c("both", "one", "neither", "all") %>%
       ) %>%
         quantile(
           probs = c(0.025, 0.975)
-        ) %>%
-        magrittr::multiply_by(100) %>%
-        round(2)
+        )
 
       list(
         ranked = .y,
-        overall = odd_result_prop,
-        lo = ci[1],
-        hi = ci[2]
+        proportion = paste0(round(100 * odd_result_prop, 2), "%"),
+        lo = paste0(round(100 * ci[1], 2), "%"),
+        hi = paste0(round(100 * ci[2], 2), "%"),
+        n = nrow(.x)
       )
     }
   ) %>%
