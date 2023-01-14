@@ -6,31 +6,10 @@ library(ggthemes)
 library(purrr)
 library(svglite)
 
-Sys.setenv(R_SECRET_VAULT = "vault")
-
 source("R/helpers.R")
 source("R/data-wrangling.R")
-source("R/diagnostics.R")
 source("R/plotting.R")
-
-conn <- connect_to_db()
-
-raw <- query(
-  conn,
-  "
-  SELECT *
-  FROM cfb.espn_diagnostics
-  WHERE home_win_prob IS NOT NULL
-  "
-)
-
-clean <- raw %>%
-  remove_negative_score_games() %>%
-  generate_timestamps() %>%
-  enforce_rough_monotonicity() %>%
-  mutate(
-    home_win_fct = as.factor(home_win)
-  )
+source("R/load-clean-data.R")
 
 kickoff <- clean %>%
   group_by(game_id) %>%
@@ -62,7 +41,7 @@ walk(
   }
 )
 
-kickoff %>%
+grouped <- kickoff %>%
   group_by(
     num_ranked = case_when(
       !is.na(teams__home_ranking) & !is.na(teams__away_ranking) ~ "both",
@@ -75,12 +54,14 @@ kickoff %>%
     estimate = home_win_prob,
     event_level = "second",
     conf_level = 0.80
-  ) %>%
-  ggsave(
-    filename = "../plots/calibration/kickoff/grouped.svg",
-    plot = .,
-    device = "svg"
-  )
+  ) +
+  theme_fivethirtyeight()
+
+ggsave(
+  filename = "../plots/calibration/kickoff/grouped.svg",
+  plot = grouped,
+  device = "svg"
+)
 
 boot <- function() {
   kickoff %>%

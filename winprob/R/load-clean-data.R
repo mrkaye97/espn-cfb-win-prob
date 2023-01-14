@@ -1,6 +1,5 @@
 source("R/helpers.R")
 source("R/data-wrangling.R")
-source("R/diagnostics.R")
 source("R/plotting.R")
 
 conn <- connect_to_db()
