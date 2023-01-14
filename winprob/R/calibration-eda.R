@@ -41,12 +41,12 @@ walk(
   }
 )
 
-grouped <- kickoff %>%
+kickoff %>%
   group_by(
-    num_ranked = case_when(
-      !is.na(teams__home_ranking) & !is.na(teams__away_ranking) ~ "both",
-      !is.na(teams__home_ranking) | !is.na(teams__away_ranking) ~ "one",
-      TRUE ~ "none"
+    Ranked = case_when(
+      !is.na(teams__home_ranking) & !is.na(teams__away_ranking) ~ "Both",
+      !is.na(teams__home_ranking) | !is.na(teams__away_ranking) ~ "One",
+      TRUE ~ "Neither"
     )
   ) %>%
   cal_plot_windowed(
@@ -54,14 +54,13 @@ grouped <- kickoff %>%
     estimate = home_win_prob,
     event_level = "second",
     conf_level = 0.80
-  ) +
-  theme_fivethirtyeight()
-
-ggsave(
-  filename = "../plots/calibration/kickoff/grouped.svg",
-  plot = grouped,
-  device = "svg"
-)
+  ) %>%
+  style_plot() %>%
+  ggsave(
+    filename = "../plots/calibration/kickoff/grouped.svg",
+    plot = .,
+    device = "svg"
+  )
 
 boot <- function() {
   kickoff %>%
