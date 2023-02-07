@@ -5,8 +5,8 @@ library(DBI)
 library(secret)
 library(purrr)
 
-source("R/helpers.R")
-source("R/constants.R")
+source("R/common/helpers.R")
+source("R/common/constants.R")
 
 Sys.setenv(CFBD_API_KEY = get_secret("CFBD_API_KEY"))
 

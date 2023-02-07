@@ -44,7 +44,7 @@ generate_all_plots <- function(period) {
       subtitle = "All ranked teams",
       caption = caption
     ),
-    top_15 = generate_plot(
+    "top-15" = generate_plot(
       dplyr::filter(
         data,
         teams__home_ranking <= 15 | teams__away_ranking <= 15

@@ -1,11 +1,11 @@
-source("R/helpers.R")
-source("R/data-wrangling.R")
-source("R/plotting.R")
+source("R/common/helpers.R")
+source("R/common/data-wrangling.R")
+source("R/common/plotting.R")
 
-conn <- connect_to_db()
+.conn <- connect_to_db()
 
-raw <- query(
-  conn,
+.raw <- query(
+  .conn,
   "
   SELECT *
   FROM cfb.espn_diagnostics
@@ -13,7 +13,7 @@ raw <- query(
   "
 )
 
-clean <- raw |>
+clean <- .raw |>
   remove_negative_score_games() |>
   generate_timestamps() |>
   enforce_rough_monotonicity() |>
@@ -21,6 +21,4 @@ clean <- raw |>
     home_win_fct = as.factor(home_win)
   )
 
-DBI::dbDisconnect(conn)
-
-rm(list = ls()[ls() != "clean"])
+DBI::dbDisconnect(.conn)

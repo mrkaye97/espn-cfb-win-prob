@@ -7,13 +7,13 @@ library(bit64)
 library(secret)
 library(DBI)
 
-source("R/helpers.R")
+source("R/common/helpers.R")
 
 conn <- connect_to_db()
 
 games <- query(
   conn,
-  "select distinct game_id from raw.pbp"
+  "SELECT DISTINCT game_id FROM raw.pbp"
 )$game_id
 
 plan(multisession, workers = 10)

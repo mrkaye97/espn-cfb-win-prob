@@ -1,7 +1,7 @@
 library(dplyr)
 library(purrr)
 
-source("R/load-clean-data.R")
+source("R/common/load-clean-data.R")
 
 LOWER_BOUND <- 0.02
 UPPER_BOUND <- 0.98

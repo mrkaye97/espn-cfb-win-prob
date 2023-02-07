@@ -6,10 +6,10 @@ library(ggthemes)
 library(purrr)
 library(svglite)
 
-source("R/helpers.R")
-source("R/data-wrangling.R")
-source("R/plotting.R")
-source("R/load-clean-data.R")
+source("R/common/helpers.R")
+source("R/common/data-wrangling.R")
+source("R/common/plotting.R")
+source("R/common/load-clean-data.R")
 
 kickoff <- clean %>%
   group_by(game_id) %>%
@@ -21,7 +21,6 @@ halftime <- clean %>%
   filter(clock__period == 3) %>%
   slice_min(time_counter, n = 1, with_ties = FALSE) %>%
   ungroup()
-
 
 walk(
   c("kickoff", "halftime"),
@@ -35,7 +34,9 @@ walk(
       ~ ggsave(
         sprintf("../plots/calibration/%s/%s.svg", period, .y),
         .x,
-        device = "svg"
+        device = "svg",
+        width = 12,
+        height = 10
       )
     )
   }
@@ -55,11 +56,16 @@ kickoff %>%
     event_level = "second",
     conf_level = 0.80
   ) %>%
-  style_plot() %>%
+  style_plot(
+    title = "Calibration at Kickoff",
+    subtitle = "Grouped by how many - if any - teams were ranked (either both, neither, or one of the two)"
+  ) %>%
   ggsave(
     filename = "../plots/calibration/kickoff/grouped-by-num-ranked.svg",
     plot = .,
-    device = "svg"
+    device = "svg",
+    width = 12,
+    height = 10
   )
 
 boot <- function() {
@@ -74,10 +80,9 @@ boot <- function() {
     pull(prop)
 }
 
-purrr::rerun(
-  .n = 1000,
+purrr::map_dbl(
+  1:1000,
   boot()
 ) %>%
-  flatten_dbl() %>%
   quantile(c(0.025, 0.975))
 
