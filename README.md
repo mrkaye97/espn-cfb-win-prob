@@ -10,4 +10,4 @@ This project contains some code for analysis I've been doing on the ESPN college
 
 ## Blog Posts
 
-* https://mrkaye97.github.io/blog/posts/2023-01-09-exploring-the-tail-behavior-of-espn-s-win-probability-model/
+* https://matthewrkaye.com/posts/2023-01-09-exploring-the-tail-behavior-of-espn-s-win-probability-model/
